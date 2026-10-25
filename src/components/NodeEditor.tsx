@@ -3,7 +3,8 @@ import { totalDuration } from '../model/flatten';
 import { formatClock } from '../model/format';
 import { KIND_LABELS, MAX_BLOCK_DEPTH, MAX_ROUNDS, NAMED_KINDS, STEP_KINDS, type BlockNode, type StepKind, type StepNode, type WorkoutNode } from '../model/types';
 import { newBlock, newStep } from '../model/workout';
-import { DurationInput, Stepper, Toggle } from './inputs';
+import { useSettings } from '../store/settings';
+import { DurationInput, Stepper } from './inputs';
 import { ChevronIcon, CopyIcon, DownIcon, MoreIcon, TrashIcon, UpIcon } from './Icons';
 
 export interface EditorActions {
@@ -150,7 +151,8 @@ function BlockEditor({ block, depth, first, last }: { block: BlockNode; depth: n
   const { patch } = useActions();
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
-  const total = totalDuration([block]);
+  const skipLastRest = useSettings((s) => s.skipLastRest);
+  const total = totalDuration([block], { skipLastRest });
   const summary = [
     `${block.rounds} tour${block.rounds > 1 ? 's' : ''}`,
     block.restBetweenRounds > 0 ? `repos ${formatClock(block.restBetweenRounds)} entre tours` : null,
@@ -187,9 +189,6 @@ function BlockEditor({ block, depth, first, last }: { block: BlockNode; depth: n
             <span className="field-label">Repos entre les tours</span>
             <DurationInput value={block.restBetweenRounds} min={0} onChange={(restBetweenRounds) => patch(block.id, { restBetweenRounds })} />
           </div>
-          <Toggle checked={block.skipLastRest} onChange={(skipLastRest) => patch(block.id, { skipLastRest })} hint="Au dernier tour, le repos final du bloc est supprimé.">
-            Sauter le dernier repos
-          </Toggle>
           <NodeMenu id={block.id} first={first} last={last} />
         </div>
       )}

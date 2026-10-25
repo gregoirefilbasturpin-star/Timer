@@ -6,7 +6,7 @@
  * compteur incrémenté : un onglet ralenti ou mis en arrière-plan se recale
  * sur l'heure réelle au tick suivant, sans dérive.
  */
-import { flatten, type FlatStep } from '../model/flatten';
+import { flatten, type FlatStep, type FlattenOptions } from '../model/flatten';
 import type { Workout } from '../model/types';
 
 export type RunStatus = 'ready' | 'running' | 'paused' | 'finished';
@@ -62,8 +62,8 @@ export function createRunFromSteps(workoutId: string, workoutName: string, steps
   };
 }
 
-export function createRun(workout: Workout): Run | null {
-  return createRunFromSteps(workout.id, workout.name, flatten(workout));
+export function createRun(workout: Workout, options: FlattenOptions): Run | null {
+  return createRunFromSteps(workout.id, workout.name, flatten(workout, options));
 }
 
 export function resetRun(run: Run): Run {

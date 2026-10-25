@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import { CloseIcon, CopyIcon, DownloadIcon, MoreIcon, PlayIcon, PlusIcon, SettingsIcon, TrashIcon } from '../components/Icons';
+import { CloseIcon, CopyIcon, DownloadIcon, EditIcon, MoreIcon, PlayIcon, PlusIcon, SettingsIcon, TrashIcon } from '../components/Icons';
 import { flatten } from '../model/flatten';
 import { formatClock, formatCountdown } from '../model/format';
 import type { Workout } from '../model/types';
@@ -10,6 +10,7 @@ import { downloadWorkout } from '../services/backup';
 import { requestPersistentStorage, workoutsRepo } from '../services/db';
 import { applyUpdate, promptInstall, useInstallAvailable, useUpdateReady } from '../services/pwa';
 import { clearStoredRun, loadStoredRun } from '../store/run';
+import { useSettings } from '../store/settings';
 
 export function HomeScreen() {
   const workouts = useLiveQuery(() => workoutsRepo.list(), []);
@@ -17,9 +18,10 @@ export function HomeScreen() {
   const installAvailable = useInstallAvailable();
   const updateReady = useUpdateReady();
 
-  const create = async () => {
+  const create = () => {
     const workout = newWorkout();
-    await workoutsRepo.save(workout);
+    // La séance est mise en cache immédiatement : l'éditeur n'attend pas l'écriture IndexedDB.
+    void workoutsRepo.save(workout);
     void requestPersistentStorage();
     navigate(`/edit/${workout.id}`);
   };
@@ -90,7 +92,7 @@ export function HomeScreen() {
       </ul>
 
       <footer className="bottom-bar">
-        <button type="button" className="btn primary wide" onClick={() => void create()}>
+        <button type="button" className="btn primary wide" onClick={create}>
           <PlusIcon size={20} /> Nouvelle séance
         </button>
       </footer>
@@ -100,7 +102,8 @@ export function HomeScreen() {
 
 function WorkoutCard({ workout }: { workout: Workout }) {
   const [open, setOpen] = useState(false);
-  const steps = flatten(workout);
+  const skipLastRest = useSettings((s) => s.skipLastRest);
+  const steps = flatten(workout, { skipLastRest });
   const total = steps.reduce((sum, s) => sum + s.duration, 0);
   const kinds = new Set(steps.map((s) => s.kind));
 
@@ -133,6 +136,9 @@ function WorkoutCard({ workout }: { workout: Workout }) {
       </div>
       {open && (
         <div className="card-actions">
+          <button type="button" className="btn small" onClick={() => navigate(`/edit/${workout.id}`)}>
+            <EditIcon size={18} /> Modifier
+          </button>
           <button type="button" className="btn small" onClick={() => void workoutsRepo.save(duplicateWorkout(workout))}>
             <CopyIcon size={18} /> Dupliquer
           </button>

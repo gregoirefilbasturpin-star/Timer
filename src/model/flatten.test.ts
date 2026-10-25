@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flattenNodes, totalDuration } from './flatten';
+import { flattenNodes as flattenWith, totalDuration, type FlattenOptions } from './flatten';
 import type { BlockNode, StepKind, StepNode, WorkoutNode } from './types';
 
 const step = (kind: StepKind, duration: number, name = ''): StepNode => ({ id: `${kind}${duration}${name}`, type: 'step', kind, name, duration });
@@ -9,10 +9,12 @@ const block = (rounds: number, children: WorkoutNode[], extra: Partial<BlockNode
   name: '',
   rounds,
   restBetweenRounds: 0,
-  skipLastRest: false,
   children,
   ...extra,
 });
+
+const KEEP: FlattenOptions = { skipLastRest: false };
+const flattenNodes = (nodes: WorkoutNode[], options = KEEP) => flattenWith(nodes, options);
 
 describe('flattenNodes', () => {
   it('déroule les répétitions et calcule les offsets', () => {
@@ -27,8 +29,13 @@ describe('flattenNodes', () => {
     expect(steps[3].rounds).toEqual([{ label: 'Tour', current: 2, total: 2 }]);
   });
 
+  it('garde le dernier repos si l’option est désactivée', () => {
+    const steps = flattenNodes([block(2, [step('work', 30), step('rest', 15)])]);
+    expect(steps.map((s) => s.kind)).toEqual(['work', 'rest', 'work', 'rest']);
+  });
+
   it('saute le dernier repos du dernier tour', () => {
-    const steps = flattenNodes([block(2, [step('work', 30), step('rest', 15)], { skipLastRest: true })]);
+    const steps = flattenNodes([block(2, [step('work', 30), step('rest', 15)])], { skipLastRest: true });
     expect(steps.map((s) => s.kind)).toEqual(['work', 'rest', 'work']);
   });
 
@@ -46,7 +53,7 @@ describe('flattenNodes', () => {
     const steps = flattenNodes([outer]);
     expect(steps).toHaveLength(8);
     expect(steps[7].rounds.map((r) => r.current)).toEqual([2, 2, 2]);
-    expect(totalDuration([outer])).toBe(40);
+    expect(totalDuration([outer], KEEP)).toBe(40);
   });
 
   it('ignore les tours uniques dans le suivi des tours', () => {

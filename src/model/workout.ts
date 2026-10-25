@@ -25,7 +25,6 @@ export function newBlock(): BlockNode {
     name: '',
     rounds: 3,
     restBetweenRounds: 0,
-    skipLastRest: true,
     children: [newStep('work'), newStep('rest')],
   };
 }
@@ -147,7 +146,6 @@ function sanitizeNodes(list: unknown[], depth: number): WorkoutNode[] | null {
         name: asString(raw.name),
         rounds: asInt(raw.rounds, 1, MAX_ROUNDS, 1),
         restBetweenRounds: asInt(raw.restBetweenRounds, 0, MAX_DURATION, 0),
-        skipLastRest: raw.skipLastRest !== false,
         children,
       });
     } else {

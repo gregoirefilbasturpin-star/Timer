@@ -7,25 +7,35 @@ import type { Workout } from '../model/types';
 import { appendNode, duplicateNode, moveNode, removeNode, updateNode } from '../model/workout';
 import { goBack, navigate } from '../hooks/useRoute';
 import { workoutsRepo } from '../services/db';
+import { MessageScreen } from '../components/MessageScreen';
+import { useSettings } from '../store/settings';
 
 const AUTOSAVE_DELAY_MS = 400;
 
 export function EditorScreen({ id }: { id: string }) {
-  const [workout, setWorkout] = useState<Workout | null | undefined>(undefined);
-  const latest = useRef<Workout | null>(null);
+  const [workout, setWorkout] = useState<Workout | null | undefined>(() => workoutsRepo.peek(id));
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const latest = useRef<Workout | null>(workout ?? null);
   const dirty = useRef(false);
+  const skipLastRest = useSettings((s) => s.skipLastRest);
 
   useEffect(() => {
+    if (latest.current) return;
     let cancelled = false;
-    workoutsRepo.get(id).then((w) => {
-      if (cancelled) return;
-      latest.current = w ?? null;
-      setWorkout(w ?? null);
-    });
+    setLoadError(null);
+    workoutsRepo
+      .get(id)
+      .then((w) => {
+        if (cancelled) return;
+        latest.current = w ?? null;
+        setWorkout(w ?? null);
+      })
+      .catch((e: unknown) => !cancelled && setLoadError(String((e as Error)?.message ?? e)));
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, attempt]);
 
   const flush = useCallback(() => {
     if (dirty.current && latest.current) {
@@ -68,19 +78,21 @@ export function EditorScreen({ id }: { id: string }) {
     [update],
   );
 
-  if (workout === undefined) return <div className="screen" />;
-  if (workout === null) {
+  if (loadError) {
     return (
-      <div className="screen">
-        <p className="empty">Séance introuvable.</p>
-        <button type="button" className="btn" onClick={goBack}>
-          Retour
+      <MessageScreen title="Impossible d’ouvrir la séance" detail={loadError}>
+        <button type="button" className="btn primary" onClick={() => setAttempt((n) => n + 1)}>
+          Réessayer
         </button>
-      </div>
+      </MessageScreen>
     );
   }
+  if (workout === undefined) return <MessageScreen title="Chargement…" />;
+  if (workout === null) {
+    return <MessageScreen title="Séance introuvable." />;
+  }
 
-  const total = totalDuration(workout.children);
+  const total = totalDuration(workout.children, { skipLastRest });
 
   return (
     <div className="screen editor">

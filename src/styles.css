@@ -983,3 +983,14 @@ body:has(.run.active) {
     transition: none !important;
   }
 }
+
+.error-detail {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.button-row.centered {
+  justify-content: center;
+  margin-top: 12px;
+}

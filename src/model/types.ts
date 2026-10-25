@@ -19,8 +19,6 @@ export interface BlockNode {
   rounds: number;
   /** Secondes, 0 = aucun repos inséré entre les tours. */
   restBetweenRounds: number;
-  /** Au dernier tour, supprime le repos final du bloc. */
-  skipLastRest: boolean;
   children: WorkoutNode[];
 }
 

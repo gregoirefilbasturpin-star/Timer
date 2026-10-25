@@ -57,6 +57,16 @@ export function SettingsScreen() {
         <h1>Paramètres</h1>
       </header>
 
+      <Section title="Séances">
+        <Toggle
+          checked={s.skipLastRest}
+          onChange={(skipLastRest) => s.update({ skipLastRest })}
+          hint="Au dernier tour d’un bloc, le repos qui termine le bloc est supprimé."
+        >
+          Sauter le dernier repos des blocs
+        </Toggle>
+      </Section>
+
       <Section title="Annonces vocales">
         <Toggle checked={s.voice} onChange={(voice) => s.update({ voice })} hint="Nom de l’exercice au début de chaque étape.">
           Annonces vocales
@@ -84,7 +94,7 @@ export function SettingsScreen() {
           <span>Vitesse : {s.voiceRate.toFixed(2)}×</span>
           <input type="range" min={0.7} max={1.6} step={0.05} value={s.voiceRate} disabled={!s.voice} onChange={(e) => s.update({ voiceRate: Number(e.target.value) })} />
         </label>
-        <Toggle checked={s.announceDuration} disabled={!s.voice} onChange={(announceDuration) => s.update({ announceDuration })} hint="« Pompes, 30 secondes »">
+        <Toggle checked={s.announceDuration} disabled={!s.voice} onChange={(announceDuration) => s.update({ announceDuration })} hint="« Squats, 30 secondes ». La charge est toujours annoncée si elle est renseignée.">
           Annoncer la durée
         </Toggle>
         <Toggle checked={s.announceNext} disabled={!s.voice} onChange={(announceNext) => s.update({ announceNext })} hint="Pendant le repos et la préparation : « Ensuite, pompes ».">

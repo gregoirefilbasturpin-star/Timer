@@ -1,10 +1,11 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { HoldButton } from '../components/HoldButton';
-import { CloseIcon, LockIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon } from '../components/Icons';
+import { CloseIcon, EditIcon, LockIcon, NextIcon, PauseIcon, PlayIcon, PrevIcon } from '../components/Icons';
 import { createRun, progress, remainingMs, type Run } from '../engine/engine';
 import { formatClock, formatCountdown } from '../model/format';
-import { KIND_LABELS } from '../model/types';
-import { goBack } from '../hooks/useRoute';
+import { KIND_LABELS, type Workout } from '../model/types';
+import { MessageScreen } from '../components/MessageScreen';
+import { goBack, navigate } from '../hooks/useRoute';
 import { workoutsRepo } from '../services/db';
 import { wakeLock } from '../services/device';
 import { feedback } from '../services/feedback';
@@ -22,12 +23,15 @@ export function RunScreen({ workoutId }: { workoutId?: string }) {
   useEffect(() => {
     let cancelled = false;
     if (workoutId) {
-      workoutsRepo.get(workoutId).then((w) => {
+      const open = (w: Workout | undefined) => {
         if (cancelled) return;
-        const r = w && createRun(w);
+        const r = w && createRun(w, { skipLastRest: useSettings.getState().skipLastRest });
         if (r) runActions.load(r);
         else setMissing(true);
-      });
+      };
+      const cached = workoutsRepo.peek(workoutId);
+      if (cached) open(cached);
+      else workoutsRepo.get(workoutId).then(open, () => open(undefined));
     } else {
       const r = loadStoredRun();
       if (r) {
@@ -64,17 +68,8 @@ export function RunScreen({ workoutId }: { workoutId?: string }) {
     else void wakeLock.release();
   }, [status]);
 
-  if (missing) {
-    return (
-      <div className="screen">
-        <p className="empty">Séance introuvable.</p>
-        <button type="button" className="btn" onClick={goBack}>
-          Retour
-        </button>
-      </div>
-    );
-  }
-  if (!run) return <div className="screen run" />;
+  if (missing) return <MessageScreen title="Séance introuvable." />;
+  if (!run) return <MessageScreen title="Chargement…" />;
   if (run.status === 'finished') return <FinishedView run={run} />;
   if (run.status === 'ready' || restored) {
     return (
@@ -125,6 +120,11 @@ function StartView({ run, onStart }: { run: Run; onStart: () => void }) {
           <PlayIcon size={40} />
           {resuming ? 'Reprendre' : 'Démarrer'}
         </button>
+        {!resuming && (
+          <button type="button" className="btn" onClick={() => navigate(`/edit/${run.workoutId}`, { replace: true })}>
+            <EditIcon size={18} /> Modifier la séance
+          </button>
+        )}
       </div>
     </div>
   );

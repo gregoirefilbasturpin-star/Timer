@@ -11,6 +11,8 @@ export interface Settings {
   beeps: boolean;
   volume: number;
   vibration: boolean;
+  /** Au dernier tour d'un bloc, supprime le repos final. */
+  skipLastRest: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   beeps: true,
   volume: 1,
   vibration: true,
+  skipLastRest: true,
 };
 
 interface SettingsStore extends Settings {

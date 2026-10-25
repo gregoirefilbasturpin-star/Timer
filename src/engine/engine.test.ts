@@ -5,7 +5,7 @@ import { stepAnnouncement, spokenDuration } from './announce';
 import { addTime, createRunFromSteps, next, pause, previous, progress, remainingMs, resume, start, tick, toStored, type Run } from './engine';
 
 const step = (kind: StepNode['kind'], duration: number, name = ''): StepNode => ({ id: name + duration, type: 'step', kind, name, duration });
-const steps = flattenNodes([step('prep', 5), step('work', 10, 'Squats'), step('rest', 5)]);
+const steps = flattenNodes([step('prep', 5), step('work', 10, 'Squats'), step('rest', 5)], { skipLastRest: false });
 const T0 = 1_000_000;
 
 function started(): Run {
@@ -97,5 +97,12 @@ describe('announce', () => {
     const opts = { duration: true, next: true, round: false };
     expect(stepAnnouncement(steps, 0, opts)).toBe('Préparation, 5 secondes. Ensuite, Squats');
     expect(stepAnnouncement(steps, 1, opts)).toBe('Squats, 10 secondes');
+  });
+
+  it('annonce la charge seulement si elle est renseignée', () => {
+    const loaded = flattenNodes([step('prep', 5), { ...step('work', 30, 'Squats'), load: '20 kg' }], { skipLastRest: false });
+    const opts = { duration: true, next: true, round: false };
+    expect(stepAnnouncement(loaded, 1, opts)).toBe('Squats, 30 secondes, charge 20 kg');
+    expect(stepAnnouncement(loaded, 0, opts)).toBe('Préparation, 5 secondes. Ensuite, Squats, charge 20 kg');
   });
 });

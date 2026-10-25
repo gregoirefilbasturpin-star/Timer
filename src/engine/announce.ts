@@ -15,18 +15,22 @@ export function spokenDuration(seconds: number): string {
   return m ? minutes : secs;
 }
 
-/** Texte prononcé au début d'une étape : « Pompes, 30 secondes ». */
+const spokenLoad = (step: FlatStep) => (step.load ? `charge ${step.load}` : null);
+
+/** Texte prononcé au début d'une étape : « Squats, 30 secondes, charge 20 kg ». */
 export function stepAnnouncement(steps: FlatStep[], index: number, options: AnnounceOptions): string {
   const step = steps[index];
   const head = [step.label];
   const round = step.rounds.at(-1);
   if (options.round && round && !step.betweenRounds) head.push(`${round.label} ${round.current} sur ${round.total}`);
   if (options.duration) head.push(spokenDuration(step.duration));
+  const load = spokenLoad(step);
+  if (load) head.push(load);
 
   let text = head.join(', ');
   const following = steps[index + 1];
   if (options.next && following && (step.kind === 'rest' || step.kind === 'prep')) {
-    text += `. Ensuite, ${following.label}`;
+    text += `. Ensuite, ${[following.label, spokenLoad(following)].filter(Boolean).join(', ')}`;
   }
   return text;
 }
