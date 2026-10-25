@@ -115,3 +115,8 @@ export const EditIcon = (p: IconProps) => (
     <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
   </Icon>
 );
+export const CheckIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 12l5 5L20 7" />
+  </Icon>
+);

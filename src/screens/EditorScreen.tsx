@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackIcon, PlayIcon } from '../components/Icons';
+import { BackIcon, CheckIcon } from '../components/Icons';
 import { EditorContext, NodeList, type EditorActions } from '../components/NodeEditor';
 import { totalDuration } from '../model/flatten';
 import { formatClock } from '../model/format';
 import type { Workout } from '../model/types';
 import { appendNode, duplicateNode, moveNode, removeNode, updateNode } from '../model/workout';
-import { goBack, navigate } from '../hooks/useRoute';
+import { goBack } from '../hooks/useRoute';
 import { workoutsRepo } from '../services/db';
 import { MessageScreen } from '../components/MessageScreen';
 import { useSettings } from '../store/settings';
@@ -120,13 +120,12 @@ export function EditorScreen({ id }: { id: string }) {
         <button
           type="button"
           className="btn primary"
-          disabled={total === 0}
           onClick={() => {
             flush();
-            navigate(`/run/${workout.id}`, { replace: true });
+            goBack();
           }}
         >
-          <PlayIcon size={20} /> Lancer
+          <CheckIcon size={20} /> Enregistrer
         </button>
       </footer>
     </div>
